@@ -1,0 +1,84 @@
+{
+  "name": "autoreadme",
+  "displayName": "AutoReadme",
+  "description": "Auto-generate code comments and README documentation as you code",
+  "version": "0.1.0",
+  "publisher": "DheerajKumar",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "documentation",
+    "comments",
+    "ai",
+    "readme",
+    "auto-document"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "autoreadme.login",
+        "title": "AutoReadme: Login"
+      },
+      {
+        "command": "autoreadme.devLogin",
+        "title": "AutoReadme: Dev Login (Testing)"
+      },
+      {
+        "command": "autoreadme.logout",
+        "title": "AutoReadme: Logout"
+      },
+      {
+        "command": "autoreadme.enableDocumentation",
+        "title": "AutoReadme: Enable Documentation for This Project"
+      }
+    ],
+    "configuration": {
+      "title": "AutoReadme",
+      "properties": {
+        "autoreadme.apiEndpoint": {
+          "type": "string",
+          "default": "https://autoreadme-api.vercel.app",
+          "description": "Backend API endpoint URL"
+        },
+        "autoreadme.commentStyle": {
+          "type": "string",
+          "enum": [
+            "short",
+            "explanatory",
+            "pr-review"
+          ],
+          "default": "short",
+          "description": "Default comment style for auto-generated comments"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./dist/test/runTest.js",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "diff": "^5.1.0"
+  }
+}

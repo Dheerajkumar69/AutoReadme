@@ -1,6 +1,6 @@
 {
-  "name": "autoreadme",
-  "displayName": "AutoReadme",
+  "name": "dks-autoreadme01",
+  "displayName": "DKS AutoReadme",
   "description": "Auto-generate code comments and README documentation as you code",
   "version": "0.1.0",
   "publisher": "DheerajKumar",

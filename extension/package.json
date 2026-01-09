@@ -1,9 +1,10 @@
 {
   "name": "dks-autoreadme01",
-  "displayName": "DKS AutoReadme",
-  "description": "Auto-generate code comments and README documentation as you code",
-  "version": "0.1.0",
+  "displayName": "AutoDocs",
+  "description": "✨ Scan your codebase and auto-generate documentation for all functions and classes",
+  "version": "0.5.0",
   "publisher": "DheerajKumar",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -15,8 +16,8 @@
     "documentation",
     "comments",
     "ai",
-    "readme",
-    "auto-document"
+    "auto-document",
+    "readme"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -25,24 +26,28 @@
   "contributes": {
     "commands": [
       {
-        "command": "autoreadme.login",
-        "title": "AutoReadme: Login"
+        "command": "autodocs.scanCodebase",
+        "title": "AutoDocs: Scan & Document Codebase 🔍"
       },
       {
-        "command": "autoreadme.devLogin",
-        "title": "AutoReadme: Dev Login (Testing)"
+        "command": "autodocs.documentFile",
+        "title": "AutoDocs: Document Current File 📄"
       },
       {
-        "command": "autoreadme.logout",
-        "title": "AutoReadme: Logout"
+        "command": "autodocs.generateReadme",
+        "title": "AutoDocs: Generate README 📖"
       },
       {
-        "command": "autoreadme.enableDocumentation",
-        "title": "AutoReadme: Enable Documentation for This Project"
+        "command": "autodocs.showUsage",
+        "title": "AutoDocs: Show Stats 📊"
+      },
+      {
+        "command": "autodocs.showLogs",
+        "title": "AutoDocs: Show Debug Logs"
       }
     ],
     "configuration": {
-      "title": "AutoReadme",
+      "title": "AutoDocs",
       "properties": {
         "autoreadme.apiEndpoint": {
           "type": "string",
@@ -56,8 +61,8 @@
             "explanatory",
             "pr-review"
           ],
-          "default": "short",
-          "description": "Default comment style for auto-generated comments"
+          "default": "explanatory",
+          "description": "Comment style for generated documentation"
         }
       }
     }
@@ -66,8 +71,6 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile",
-    "test": "node ./dist/test/runTest.js",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {

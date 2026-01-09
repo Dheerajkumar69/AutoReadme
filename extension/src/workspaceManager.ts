@@ -78,7 +78,7 @@ export class WorkspaceManager {
         const folderName = folder?.name || 'this project';
 
         const response = await vscode.window.showInformationMessage(
-            `📝 Would you like AutoReadme to document "${folderName}"?\n\nThis will create a README.md and add helpful comments to your code.`,
+            `📝 Would you like AutoDocs to document "${folderName}"?\n\nThis will create a README.md and add helpful comments to your code.`,
             { modal: false },
             'Yes, Document It',
             'No Thanks'
@@ -116,7 +116,7 @@ export class WorkspaceManager {
         await this.context.globalState.update(WORKSPACE_SETTINGS_KEY, settings);
 
         this._onWorkspaceActivated.fire(true);
-        vscode.window.showInformationMessage('✅ AutoReadme is now active! Your code will be documented automatically.');
+        vscode.window.showInformationMessage('✅ AutoDocs is now active! Your code will be documented automatically.');
     }
 
     /**
@@ -144,7 +144,7 @@ export class WorkspaceManager {
         try {
             await vscode.workspace.fs.stat(readmePath);
             // README exists, don't overwrite
-            vscode.window.showInformationMessage('README.md already exists. AutoReadme will update it as you code.');
+            vscode.window.showInformationMessage('README.md already exists. AutoDocs will update it as you code.');
             return;
         } catch {
             // README doesn't exist, create it
@@ -200,11 +200,11 @@ export class WorkspaceManager {
     private generateReadmeTemplate(projectName: string, structure: string[]): string {
         return `# ${projectName}
 
-> 📝 This README is maintained by [AutoReadme](https://github.com/autoreadme)
+> 📝 This README is maintained by [AutoDocs](https://github.com/autodocs)
 
 ## Overview
 
-<!-- AutoReadme will fill this section as you develop -->
+<!-- AutoDocs will fill this section as you develop -->
 
 *Start coding and this section will be updated automatically with a description of your project.*
 
@@ -216,7 +216,7 @@ ${structure.join('\n')}
 
 ## Getting Started
 
-<!-- AutoReadme will add setup instructions based on your code -->
+<!-- AutoDocs will add setup instructions based on your code -->
 
 ## Features
 

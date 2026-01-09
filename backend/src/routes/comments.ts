@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { commentGenerator } from '../services/commentGenerator';
 import { diffAnalyzer } from '../services/diffAnalyzer';
+import { checkUsage, incrementUsage } from '../services/usageTracker';
 import { CommentRequest, CommentResponse } from '../types';
 
 export const commentRoutes = Router();
@@ -31,9 +32,26 @@ const generateRequestSchema = z.object({
  */
 commentRoutes.post('/generate', async (req: Request, res: Response) => {
     try {
+        // Get device ID from header (no login required)
+        const deviceId = req.headers['x-device-id'] as string || req.headers['authorization']?.replace('Bearer ', '') || 'anonymous';
+
+        // Check usage limits
+        const usage = checkUsage(deviceId);
+        if (!usage.allowed) {
+            res.status(429).json({
+                error: 'Daily limit reached',
+                code: 'LIMIT_EXCEEDED',
+                usage: {
+                    used: usage.used,
+                    limit: usage.limit,
+                    remaining: 0
+                }
+            });
+            return;
+        }
+
         // Validate request body
         const parseResult = generateRequestSchema.safeParse(req.body);
-
         if (!parseResult.success) {
             res.status(400).json({
                 error: 'Invalid request body',
@@ -49,12 +67,16 @@ commentRoutes.post('/generate', async (req: Request, res: Response) => {
         const analysis = await diffAnalyzer.analyze(request.diffChunks, request.fullFileContent);
 
         if (!analysis.isMeaningful) {
-            const response: CommentResponse = {
+            res.json({
                 success: true,
                 suggestions: [],
-                shouldUpdateDocs: false
-            };
-            res.json(response);
+                shouldUpdateDocs: false,
+                usage: {
+                    used: usage.used,
+                    limit: usage.limit,
+                    remaining: usage.remaining
+                }
+            });
             return;
         }
 
@@ -67,13 +89,25 @@ commentRoutes.post('/generate', async (req: Request, res: Response) => {
             analysis
         );
 
-        const response: CommentResponse = {
+        // Increment usage only if we actually generated comments
+        if (suggestions.length > 0) {
+            incrementUsage(deviceId);
+        }
+
+        const updatedUsage = checkUsage(deviceId);
+
+        const response = {
             success: true,
             suggestions,
             shouldUpdateDocs: analysis.isPublicApi,
             docUpdateReason: analysis.isPublicApi
                 ? 'This change affects public API and may need documentation updates'
-                : undefined
+                : undefined,
+            usage: {
+                used: updatedUsage.used,
+                limit: updatedUsage.limit,
+                remaining: updatedUsage.remaining
+            }
         };
 
         res.json(response);

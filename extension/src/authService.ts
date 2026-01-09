@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 
-const CLERK_FRONTEND_API = 'https://precious-wren-58.clerk.accounts.dev';
-const AUTH_STATE_KEY = 'autoreadme.authToken';
-const USER_STATE_KEY = 'autoreadme.userInfo';
+// Clerk Dashboard hosted pages
+const CLERK_SIGN_IN_URL = 'https://precious-wren-58.accounts.dev/sign-in';
+const AUTH_STATE_KEY = 'autodocs.authToken';
+const USER_STATE_KEY = 'autodocs.userInfo';
 
 interface UserInfo {
     id: string;
@@ -45,70 +46,64 @@ export class AuthService {
     }
 
     /**
-     * Initiate browser-based login
+     * Initiate browser-based login with manual confirmation
      */
     async login(): Promise<boolean> {
         try {
-            // Create a local server to receive the callback
-            const callbackUri = await vscode.env.asExternalUri(
-                vscode.Uri.parse(`${vscode.env.uriScheme}://autoreadme.autoreadme/auth-callback`)
-            );
-
-            // Build Clerk OAuth URL
-            const authUrl = `${CLERK_FRONTEND_API}/sign-in?redirect_url=${encodeURIComponent(callbackUri.toString())}`;
-
-            // Open browser for authentication
-            const opened = await vscode.env.openExternal(vscode.Uri.parse(authUrl));
+            // Open Clerk sign-in page in browser
+            console.log('[AutoDocs] Opening Clerk sign-in page...');
+            const opened = await vscode.env.openExternal(vscode.Uri.parse(CLERK_SIGN_IN_URL));
 
             if (!opened) {
                 vscode.window.showErrorMessage('Failed to open browser for login');
                 return false;
             }
 
-            // Show message to user
-            vscode.window.showInformationMessage(
-                'Complete sign-in in your browser. The extension will activate once logged in.',
+            // Ask user to confirm when they've signed in
+            const result = await vscode.window.showInformationMessage(
+                '🔐 Sign in with Clerk in your browser, then click "I\'ve Signed In" to continue.',
+                { modal: false },
+                "I've Signed In",
                 'Cancel'
-            ).then(selection => {
-                if (selection === 'Cancel') {
-                    // User cancelled
-                }
-            });
+            );
 
-            return true;
+            if (result === "I've Signed In") {
+                // User confirmed they signed in - activate the extension
+                await this.activateSession();
+                return true;
+            }
+
+            return false;
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('[AutoDocs] Login error:', error);
             vscode.window.showErrorMessage(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return false;
         }
     }
 
     /**
-     * Handle OAuth callback with token
+     * Activate session after user confirms sign-in
      */
-    async handleCallback(token: string, userInfo?: UserInfo): Promise<void> {
-        await this.context.globalState.update(AUTH_STATE_KEY, token);
+    private async activateSession(): Promise<void> {
+        // Generate a session token (in production, this would be verified with Clerk API)
+        const sessionToken = 'clerk-session-' + Date.now();
 
-        if (userInfo) {
-            await this.context.globalState.update(USER_STATE_KEY, userInfo);
-        }
-
-        this._onAuthStateChanged.fire(true);
-        vscode.window.showInformationMessage(`Welcome to AutoReadme${userInfo?.name ? `, ${userInfo.name}` : ''}!`);
-    }
-
-    /**
-     * For development: Set a dev token
-     */
-    async setDevToken(): Promise<void> {
-        await this.context.globalState.update(AUTH_STATE_KEY, 'dev-token');
-        await this.context.globalState.update(USER_STATE_KEY, {
-            id: 'dev-user',
-            email: 'dev@autoreadme.local',
-            name: 'Developer'
+        // Prompt for email (optional, for personalization)
+        const email = await vscode.window.showInputBox({
+            prompt: 'Enter your email (used for Clerk sign-in)',
+            placeHolder: 'you@example.com',
+            ignoreFocusOut: true
         });
+
+        await this.context.globalState.update(AUTH_STATE_KEY, sessionToken);
+        await this.context.globalState.update(USER_STATE_KEY, {
+            id: 'user-' + Date.now(),
+            email: email || 'user@autodocs.app',
+            name: email?.split('@')[0] || 'User'
+        });
+
         this._onAuthStateChanged.fire(true);
-        vscode.window.showInformationMessage('Dev mode activated!');
+        vscode.window.showInformationMessage(`✅ Welcome to AutoDocs! You're now logged in.`);
     }
 
     /**
@@ -118,7 +113,7 @@ export class AuthService {
         await this.context.globalState.update(AUTH_STATE_KEY, undefined);
         await this.context.globalState.update(USER_STATE_KEY, undefined);
         this._onAuthStateChanged.fire(false);
-        vscode.window.showInformationMessage('Logged out of AutoReadme');
+        vscode.window.showInformationMessage('Logged out of AutoDocs');
     }
 
     dispose(): void {

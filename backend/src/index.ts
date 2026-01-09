@@ -4,48 +4,57 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { commentRoutes } from './routes/comments';
 import { docRoutes } from './routes/docs';
-import { authMiddleware } from './middleware/auth';
+import { paymentRoutes } from './routes/payment';
+import { deviceMiddleware } from './middleware/auth';
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
-    origin: '*', // Allow all origins for VS Code extension
+    origin: '*',
     credentials: true
 }));
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
-    message: { error: 'Too many requests', code: 'RATE_LIMITED' }
+    windowMs: 1 * 60 * 1000,
+    max: 30,
+    message: { error: 'Too many requests, slow down!', code: 'RATE_LIMITED' }
 });
 app.use(limiter);
 
 // Body parsing
 app.use(express.json({ limit: '1mb' }));
 
-// Health check (no auth required)
-app.get('/api/health', (req, res) => {
+// Device ID middleware
+app.use(deviceMiddleware);
+
+// Health check
+app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
     res.json({
-        name: 'AutoReadme API',
-        version: '0.1.0',
-        status: 'running'
+        name: 'AutoDocs API',
+        version: '0.3.0',
+        status: 'running',
+        pricing: {
+            free: '100 comments/day',
+            pro: '1000 comments/day for ₹10/month'
+        }
     });
 });
 
-// Protected routes
-app.use('/api/comments', authMiddleware, commentRoutes);
-app.use('/api/docs', authMiddleware, docRoutes);
+// Public routes
+app.use('/api/comments', commentRoutes);
+app.use('/api/docs', docRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Error:', err);
     res.status(500).json({
         error: err.message || 'Internal server error',
@@ -57,7 +66,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 if (process.env.NODE_ENV !== 'production') {
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
-        console.log(`🚀 AutoReadme backend running on port ${PORT}`);
+        console.log(`🚀 AutoDocs backend running on port ${PORT}`);
     });
 }
 
